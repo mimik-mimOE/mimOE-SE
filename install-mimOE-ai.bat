@@ -292,12 +292,47 @@ if %ERRORLEVEL%==0 (
 
 REM Download model from Hugging Face
 echo     Downloading model ^(~386MB^)...
-echo     This may take a few minutes depending on your connection...
+echo     This may take several minutes...
 
-REM Note: SSE progress parsing is complex in batch, so we just wait
-curl -s -X POST "%BASE_URL%/models/%DEFAULT_MODEL_ID%/download" -H "Content-Type: application/json" -H "Authorization: Bearer %API_KEY%" -d "{\"url\":\"%DEFAULT_MODEL_URL%\"}" >nul
+REM Use PowerShell for streaming download with progress
+powershell -NoProfile -Command ^
+    "$ProgressPreference = 'Continue'; " ^
+    "$uri = '%BASE_URL%/models/%DEFAULT_MODEL_ID%/download'; " ^
+    "$body = '{\"url\":\"%DEFAULT_MODEL_URL%\"}'; " ^
+    "$headers = @{Authorization='Bearer %API_KEY%'}; " ^
+    "try { " ^
+    "  $reader = [System.Net.WebRequest]::Create($uri); " ^
+    "  $reader.Method = 'POST'; " ^
+    "  $reader.ContentType = 'application/json'; " ^
+    "  $reader.Headers.Add('Authorization', 'Bearer %API_KEY%'); " ^
+    "  $reader.Timeout = 600000; " ^
+    "  $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($body); " ^
+    "  $reader.ContentLength = $bodyBytes.Length; " ^
+    "  $reqStream = $reader.GetRequestStream(); " ^
+    "  $reqStream.Write($bodyBytes, 0, $bodyBytes.Length); " ^
+    "  $reqStream.Close(); " ^
+    "  $response = $reader.GetResponse(); " ^
+    "  $stream = $response.GetResponseStream(); " ^
+    "  $sr = New-Object System.IO.StreamReader($stream); " ^
+    "  while (-not $sr.EndOfStream) { " ^
+    "    $line = $sr.ReadLine(); " ^
+    "    if ($line -match 'data: (.+)') { " ^
+    "      try { " ^
+    "        $json = $Matches[1] | ConvertFrom-Json; " ^
+    "        if ($json.totalSize -gt 0) { " ^
+    "          $pct = [math]::Round(($json.size / $json.totalSize) * 100); " ^
+    "          $mb = [math]::Round($json.size / 1MB, 1); " ^
+    "          $totalMb = [math]::Round($json.totalSize / 1MB, 1); " ^
+    "          Write-Host \"`r    Progress: $pct%% ($mb / $totalMb MB)   \" -NoNewline; " ^
+    "        } " ^
+    "      } catch {} " ^
+    "    } " ^
+    "  } " ^
+    "  $sr.Close(); " ^
+    "  Write-Host ''; " ^
+    "} catch { Write-Host $_.Exception.Message }"
 
-echo [+] Model download initiated
+echo [+] Model download complete
 
 REM Wait for model to be ready
 set MAX_ATTEMPTS=120
