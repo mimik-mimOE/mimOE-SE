@@ -26,9 +26,9 @@ LOCAL_MACOS_ARM64_URL="${LOCAL_HTTP_BASE}/mimOE-SE/mimOE-ai-SE-macOS-developer-A
 LOCAL_ADDON_URL="${LOCAL_HTTP_BASE}/mimOE-addon-ai-foundation/ai-foundation-1.6.1.addon"
 
 # Remote URLs (production)
-PROD_MACOS_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-macOS-ARM64-v${VERSION}.zip"
-PROD_LINUX_AMD64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-X86_64-v${VERSION}.tar"
-PROD_LINUX_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-ARM64-v${VERSION}.tar"
+PROD_MACOS_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-macOS-developer-ARM64-v${VERSION}.zip"
+PROD_LINUX_AMD64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-X86_64-v${VERSION}.tar"
+PROD_LINUX_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-ARM64-v${VERSION}.tar"
 PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation-/releases/download/v1.6.1/ai-foundation-1.6.1.addon"
 
 # Select URLs based on mode
@@ -156,6 +156,13 @@ install_runtime() {
         echo "  Downloading runtime..."
         curl -L --progress-bar -o "$filename" "$RUNTIME_URL"
 
+        # Check if download failed (file contains "Not Found" or is HTML)
+        if grep -q "Not Found\|<!DOCTYPE\|<html" "$filename" 2>/dev/null; then
+            print_error "Download failed - file not found at URL: $RUNTIME_URL"
+            rm -f "$filename"
+            exit 1
+        fi
+
         echo "  Extracting..."
         if [[ "$filename" == *.zip ]]; then
             unzip -q -o "$filename"
@@ -193,9 +200,18 @@ install_addon() {
         ADDON_BASENAME=$(basename "$ADDON_FILE" .addon)
     else
         # Production mode - download from GitHub
+        local addon_filename=$(basename "$ADDON_URL")
         echo "  Downloading addon..."
-        curl -L --progress-bar -o addon/ai-foundation.addon "$ADDON_URL"
-        ADDON_BASENAME="ai-foundation"
+        curl -L --progress-bar -o "addon/$addon_filename" "$ADDON_URL"
+
+        # Check if download failed (file contains "Not Found" or is HTML)
+        if grep -q "Not Found\|<!DOCTYPE\|<html" "addon/$addon_filename" 2>/dev/null; then
+            print_error "Download failed - file not found at URL: $ADDON_URL"
+            rm -f "addon/$addon_filename"
+            exit 1
+        fi
+
+        ADDON_BASENAME="${addon_filename%.addon}"
     fi
 
     # Create .ini file for custom configuration
@@ -297,7 +313,14 @@ provision_model() {
             \"kind\": \"llm\"
         }")
 
-    # Check if model already exists (that's OK)
+    # Check if response is empty (API not responding)
+    if [ -z "$create_response" ]; then
+        printf " failed\n"
+        print_error "Failed to create model metadata: No response from API"
+        exit 1
+    fi
+
+    # Check if model already exists (that's OK) or other error
     if echo "$create_response" | grep -q "error"; then
         if echo "$create_response" | grep -q "already exists"; then
             printf " exists\n"

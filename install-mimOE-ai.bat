@@ -26,7 +26,7 @@ set LOCAL_WINDOWS_URL=%LOCAL_HTTP_BASE%/mimOE-SE/mimOE-ai-SE-windows-developer-x
 set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/ai-foundation-1.6.1.addon
 
 REM Remote URLs (production)
-set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-x64-v%VERSION%.zip
+set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-developer-x64-v%VERSION%.zip
 set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation-/releases/download/v1.6.1/ai-foundation-1.6.1.addon
 
 REM Select URLs based on mode
@@ -105,6 +105,14 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+REM Check if download failed (file contains "Not Found" or is HTML)
+findstr /C:"Not Found" /C:"<!DOCTYPE" /C:"<html" %FILENAME% >nul 2>&1
+if %ERRORLEVEL%==0 (
+    echo [x] Download failed - file not found at URL: %RUNTIME_URL%
+    del %FILENAME%
+    exit /b 1
+)
+
 echo     Extracting...
 tar -xf %FILENAME%
 if %ERRORLEVEL% neq 0 (
@@ -128,12 +136,26 @@ echo ==^> Installing AI Foundation addon...
 
 if not exist "addon" mkdir addon
 
+REM Extract filename from URL
+for %%F in ("%ADDON_URL%") do set ADDON_FILENAME=%%~nxF
+
 echo     Downloading addon...
-curl -L --progress-bar -o addon\ai-foundation.addon "%ADDON_URL%"
+curl -L --progress-bar -o "addon\%ADDON_FILENAME%" "%ADDON_URL%"
 if %ERRORLEVEL% neq 0 (
     echo [x] Failed to download addon
     exit /b 1
 )
+
+REM Check if download failed (file contains "Not Found" or is HTML)
+findstr /C:"Not Found" /C:"<!DOCTYPE" /C:"<html" "addon\%ADDON_FILENAME%" >nul 2>&1
+if %ERRORLEVEL%==0 (
+    echo [x] Download failed - file not found at URL: %ADDON_URL%
+    del "addon\%ADDON_FILENAME%"
+    exit /b 1
+)
+
+REM Get basename without .addon extension for .ini file
+set ADDON_BASENAME=%ADDON_FILENAME:.addon=%
 
 REM Create .ini file for custom configuration
 call :create_addon_ini
@@ -144,7 +166,7 @@ exit /b 0
 
 :create_addon_ini
 echo.
-echo ==^> Creating addon configuration ^(ai-foundation.ini^)...
+echo ==^> Creating addon configuration ^(%ADDON_BASENAME%.ini^)...
 
 (
 echo # AI Foundation addon configuration
@@ -168,7 +190,7 @@ echo # Model Registry API key
 echo # IMPORTANT: If you change this, you must also set MMODELSTORE_API_KEY
 echo # in the [milm-v1] section above to the same value
 echo # API_KEY=1234
-) > addon\ai-foundation.ini
+) > addon\%ADDON_BASENAME%.ini
 
 echo [+] Configuration file created
 exit /b 0
@@ -223,7 +245,20 @@ if %ERRORLEVEL%==0 (
 
 REM Create model metadata
 echo     Creating model metadata...
-curl -s -X POST "%BASE_URL%/models" -H "Content-Type: application/json" -H "Authorization: Bearer %API_KEY%" -d "{\"id\":\"%DEFAULT_MODEL_ID%\",\"version\":\"1.0.0\",\"kind\":\"llm\"}" >nul
+curl -s -X POST "%BASE_URL%/models" -H "Content-Type: application/json" -H "Authorization: Bearer %API_KEY%" -d "{\"id\":\"%DEFAULT_MODEL_ID%\",\"version\":\"1.0.0\",\"kind\":\"llm\"}" > metadata_response.tmp 2>&1
+
+REM Check if response contains error (but "already exists" is OK)
+findstr /C:"error" metadata_response.tmp >nul 2>&1
+if %ERRORLEVEL%==0 (
+    findstr /C:"already exists" metadata_response.tmp >nul 2>&1
+    if %ERRORLEVEL% neq 0 (
+        echo [x] Failed to create model metadata:
+        type metadata_response.tmp
+        del metadata_response.tmp
+        exit /b 1
+    )
+)
+del metadata_response.tmp 2>nul
 
 REM Check if model is already ready
 curl -s "%BASE_URL%/models/%DEFAULT_MODEL_ID%" -H "Authorization: Bearer %API_KEY%" 2>nul | findstr /C:"\"readyToUse\":true" >nul
