@@ -293,6 +293,24 @@ provision_model() {
 
     local base_url="http://localhost:8083/mimik-ai/store/v1"
 
+    # Wait for AI Foundation addon to be ready
+    local max_wait=30
+    local wait_count=0
+    while [ $wait_count -lt $max_wait ]; do
+        if curl -s "${base_url}/models" -H "Authorization: Bearer ${API_KEY}" 2>/dev/null | grep -q "\["; then
+            break
+        fi
+        printf "\r  Waiting for AI Foundation addon to initialize... (%d/%ds)" "$wait_count" "$max_wait"
+        sleep 1
+        wait_count=$((wait_count + 1))
+    done
+    printf "\r%-60s\r" " "
+
+    if [ $wait_count -ge $max_wait ]; then
+        print_error "Timeout waiting for AI Foundation addon. Check logs/mimoe.log"
+        exit 1
+    fi
+
     # Step 0: Check if model already exists and is ready
     local existing=$(curl -s "${base_url}/models/${DEFAULT_MODEL_ID}" \
         -H "Authorization: Bearer ${API_KEY}" 2>/dev/null)
