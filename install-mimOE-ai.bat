@@ -26,7 +26,7 @@ set LOCAL_WINDOWS_URL=%LOCAL_HTTP_BASE%/mimOE-SE/mimOE-ai-SE-windows-developer-x
 set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/ai-foundation-1.6.1.addon
 
 REM Remote URLs (production)
-set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-developer-x64-v%VERSION%.zip
+set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-developer-AMD64-VULKAN-v%VERSION%.zip
 set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation-/releases/download/v1.6.1/ai-foundation-1.6.1.addon
 
 REM Select URLs based on mode
@@ -235,6 +235,27 @@ echo.
 echo ==^> Provisioning default model ^(%DEFAULT_MODEL_ID%^)...
 
 set BASE_URL=http://localhost:8083/mimik-ai/store/v1
+
+REM Wait for AI Foundation addon to be ready
+set MAX_ADDON_WAIT=30
+set ADDON_WAIT=0
+
+:addon_wait_loop
+if %ADDON_WAIT% geq %MAX_ADDON_WAIT% goto addon_wait_timeout
+
+curl -s "%BASE_URL%/models" -H "Authorization: Bearer %API_KEY%" 2>nul | findstr /C:"[" >nul
+if %ERRORLEVEL%==0 goto addon_ready
+
+set /a ADDON_WAIT+=1
+echo     Waiting for AI Foundation addon to initialize... ^(%ADDON_WAIT%/%MAX_ADDON_WAIT%s^)
+timeout /t 1 /nobreak >nul
+goto addon_wait_loop
+
+:addon_wait_timeout
+echo [x] Timeout waiting for AI Foundation addon. Check logs\mimoe.log
+exit /b 1
+
+:addon_ready
 
 REM Check if model already exists and is ready
 curl -s "%BASE_URL%/models/%DEFAULT_MODEL_ID%" -H "Authorization: Bearer %API_KEY%" 2>nul | findstr /C:"\"readyToUse\":true" >nul
