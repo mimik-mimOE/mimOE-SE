@@ -29,7 +29,7 @@ LOCAL_ADDON_URL="${LOCAL_HTTP_BASE}/mimOE-addon-ai-foundation/ai-foundation-1.6.
 PROD_MACOS_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-macOS-ARM64-v${VERSION}.tar"
 PROD_LINUX_AMD64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-X86_64-v${VERSION}.tar"
 PROD_LINUX_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-ARM64-v${VERSION}.tar"
-PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.0.0/ai-foundation.addon"
+PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation-/releases/download/v1.6.1/ai-foundation-1.6.1.addon"
 
 # Select URLs based on mode
 if [ "$LOCAL_HTTP" == "1" ]; then
