@@ -105,10 +105,11 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-REM Check if download failed (file contains "Not Found" or is HTML)
-findstr /C:"Not Found" /C:"<!DOCTYPE" /C:"<html" %FILENAME% >nul 2>&1
-if %ERRORLEVEL%==0 (
-    echo [x] Download failed - file not found at URL: %RUNTIME_URL%
+REM Check if download failed (small file = error page)
+for %%A in (%FILENAME%) do set FILESIZE=%%~zA
+if %FILESIZE% LSS 10000 (
+    echo [x] Download failed - file too small, likely error page
+    echo     URL: %RUNTIME_URL%
     del %FILENAME%
     exit /b 1
 )
@@ -136,8 +137,8 @@ echo ==^> Installing AI Foundation addon...
 
 if not exist "addon" mkdir addon
 
-REM Extract filename from URL
-for %%F in ("%ADDON_URL%") do set ADDON_FILENAME=%%~nxF
+REM Hardcode addon filename (URL parsing unreliable in batch)
+set ADDON_FILENAME=ai-foundation-1.6.1.addon
 
 echo     Downloading addon...
 curl -L --progress-bar -o "addon\%ADDON_FILENAME%" "%ADDON_URL%"
@@ -146,10 +147,11 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-REM Check if download failed (file contains "Not Found" or is HTML)
-findstr /C:"Not Found" /C:"<!DOCTYPE" /C:"<html" "addon\%ADDON_FILENAME%" >nul 2>&1
-if %ERRORLEVEL%==0 (
-    echo [x] Download failed - file not found at URL: %ADDON_URL%
+REM Check if download failed (small file = error page)
+for %%A in ("addon\%ADDON_FILENAME%") do set ADDONSIZE=%%~zA
+if %ADDONSIZE% LSS 10000 (
+    echo [x] Download failed - file too small, likely error page
+    echo     URL: %ADDON_URL%
     del "addon\%ADDON_FILENAME%"
     exit /b 1
 )
@@ -333,12 +335,13 @@ echo ============================================
 echo   mimOE AI Foundation is ready!
 echo ============================================
 echo.
-echo Test your setup with this command:
+echo Test your setup:
 echo.
-echo curl -X POST "http://localhost:8083/mimik-ai/openai/v1/chat/completions" ^
-echo   -H "Content-Type: application/json" ^
-echo   -H "Authorization: Bearer %API_KEY%" ^
-echo   -d "{\"model\":\"%DEFAULT_MODEL_ID%\",\"messages\":[{\"role\":\"user\",\"content\":\"Write a haiku about AI\"}]}"
+echo   Command Prompt:
+echo   curl -X POST "http://localhost:8083/mimik-ai/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer %API_KEY%" -d "{\"model\":\"%DEFAULT_MODEL_ID%\",\"messages\":[{\"role\":\"user\",\"content\":\"Write a haiku about AI\"}]}"
+echo.
+echo   PowerShell:
+echo   Invoke-RestMethod -Uri "http://localhost:8083/mimik-ai/openai/v1/chat/completions" -Method Post -ContentType "application/json" -Headers @{Authorization="Bearer %API_KEY%"} -Body '{"model":"%DEFAULT_MODEL_ID%","messages":[{"role":"user","content":"Write a haiku about AI"}]}' ^| ConvertTo-Json -Depth 5
 echo.
 echo To stop mimOE:   taskkill /f /im mimoe.exe
 echo To restart:      start.bat
