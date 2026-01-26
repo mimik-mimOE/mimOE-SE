@@ -27,7 +27,7 @@ set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/ai-foundation-1.
 
 REM Remote URLs (production)
 set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-developer-AMD64-VULKAN-v%VERSION%.zip
-set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation-/releases/download/v1.6.1/ai-foundation-1.6.1.addon
+set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.6.1.addon
 
 REM Select URLs based on mode
 if "%LOCAL_HTTP%"=="1" (
