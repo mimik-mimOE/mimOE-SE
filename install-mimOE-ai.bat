@@ -15,7 +15,7 @@ REM Requirements: Windows 10 1803+ (has curl.exe and tar.exe built-in)
 REM #######################################################################
 
 REM Configuration
-set VERSION=3.20.0-preview
+set VERSION=3.20.0-preview.2
 set API_KEY=1234
 set DEFAULT_MODEL_ID=smollm2-360m
 set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true
@@ -28,14 +28,17 @@ set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/ai-foundation-1.
 REM Remote URLs (production)
 set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-developer-AMD64-VULKAN-v%VERSION%.zip
 set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.6.1.addon
+set PROD_MESH_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon
 
 REM Select URLs based on mode
 if "%LOCAL_HTTP%"=="1" (
     set RUNTIME_URL=%LOCAL_WINDOWS_URL%
     set ADDON_URL=%LOCAL_ADDON_URL%
+    set MESH_ADDON_URL=%PROD_MESH_ADDON_URL%
 ) else (
     set RUNTIME_URL=%PROD_WINDOWS_URL%
     set ADDON_URL=%PROD_ADDON_URL%
+    set MESH_ADDON_URL=%PROD_MESH_ADDON_URL%
 )
 
 REM Main entry point
@@ -62,7 +65,8 @@ REM Check if mimOE is already running
 curl -s "http://localhost:8083/jsonrpc/v1" -X POST -H "Content-Type: application/json" -d "{\"jsonrpc\":\"2.0\",\"method\":\"getMe\",\"id\":1}" >nul 2>&1
 if %ERRORLEVEL%==0 (
     echo [+] mimOE is already running
-    call :provision_model
+    echo [!] Skipping model provisioning ^(mimOE already running from another location^)
+    echo [!] To provision a model, stop the running instance first: taskkill /f /im mimoe.exe
     call :print_ready_message
     exit /b 0
 )
@@ -70,6 +74,11 @@ if %ERRORLEVEL%==0 (
 REM Check if already installed in current folder
 if exist "start.bat" (
     echo [!] mimOE appears to be already installed
+    echo Ensuring addons are installed...
+    call :install_addon
+    if %ERRORLEVEL% neq 0 exit /b 1
+    call :install_mesh_addon
+    if %ERRORLEVEL% neq 0 exit /b 1
     echo Starting runtime and provisioning model...
     call :start_runtime
     call :provision_model
@@ -81,6 +90,9 @@ call :install_runtime
 if %ERRORLEVEL% neq 0 exit /b 1
 
 call :install_addon
+if %ERRORLEVEL% neq 0 exit /b 1
+
+call :install_mesh_addon
 if %ERRORLEVEL% neq 0 exit /b 1
 
 call :start_runtime
@@ -195,6 +207,59 @@ echo # API_KEY=1234
 ) > addon\%ADDON_BASENAME%.ini
 
 echo [+] Configuration file created
+exit /b 0
+
+
+:install_mesh_addon
+echo.
+echo ==^> Installing Mesh Foundation addon...
+
+if not exist "addon" mkdir addon
+
+REM Hardcode mesh addon filename
+set MESH_ADDON_FILENAME=mesh-foundation-1.0.0.addon
+
+echo     Downloading mesh addon...
+curl -L --progress-bar -o "addon\%MESH_ADDON_FILENAME%" "%MESH_ADDON_URL%"
+if %ERRORLEVEL% neq 0 (
+    echo [x] Failed to download mesh addon
+    exit /b 1
+)
+
+REM Check if download failed (small file = error page)
+for %%A in ("addon\%MESH_ADDON_FILENAME%") do set MESHADDONSIZE=%%~zA
+if %MESHADDONSIZE% LSS 10000 (
+    echo [x] Download failed - file too small, likely error page
+    echo     URL: %MESH_ADDON_URL%
+    del "addon\%MESH_ADDON_FILENAME%"
+    exit /b 1
+)
+
+REM Get basename without .tar extension for .ini file
+set MESH_ADDON_BASENAME=%MESH_ADDON_FILENAME:.addon=%
+
+REM Create .ini file for custom configuration
+call :create_mesh_addon_ini
+
+echo [+] Mesh Foundation addon installed
+exit /b 0
+
+
+:create_mesh_addon_ini
+echo.
+echo ==^> Creating mesh addon configuration ^(%MESH_ADDON_BASENAME%.ini^)...
+
+(
+echo # Mesh Foundation addon configuration
+echo # This file customizes environment variables for the addon mims.
+echo # See: https://developer.mimik.com/docs/api/mcm#environment-variables
+echo.
+echo [minsight-v1]
+echo # API key for local development ^(any value works for local usage^)
+echo API_KEY=1234
+) > addon\%MESH_ADDON_BASENAME%.ini
+
+echo [+] Mesh configuration file created
 exit /b 0
 
 

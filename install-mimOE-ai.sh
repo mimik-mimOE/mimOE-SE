@@ -14,7 +14,7 @@
 set -e
 
 # Configuration
-VERSION="3.20.0-preview"
+VERSION="3.20.0-preview.2"
 API_KEY="1234"
 DEFAULT_MODEL_ID="smollm2-360m"
 DEFAULT_MODEL_URL="https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true"
@@ -30,16 +30,19 @@ PROD_MACOS_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/
 PROD_LINUX_AMD64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-X86_64-VULKAN-v${VERSION}.tar"
 PROD_LINUX_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-ARM64-v${VERSION}.tar"
 PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.6.1.addon"
+PROD_MESH_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon"
 
 # Select URLs based on mode
 if [ "$LOCAL_HTTP" == "1" ]; then
     MACOS_ARM64_URL="$LOCAL_MACOS_ARM64_URL"
     ADDON_URL="$LOCAL_ADDON_URL"
+    MESH_ADDON_URL="$PROD_MESH_ADDON_URL"  # No local override for mesh addon
 else
     MACOS_ARM64_URL="$PROD_MACOS_ARM64_URL"
     LINUX_AMD64_URL="$PROD_LINUX_AMD64_URL"
     LINUX_ARM64_URL="$PROD_LINUX_ARM64_URL"
     ADDON_URL="$PROD_ADDON_URL"
+    MESH_ADDON_URL="$PROD_MESH_ADDON_URL"
 fi
 
 # Local test paths (relative to script directory)
@@ -254,6 +257,66 @@ EOF
     print_success "Configuration file created"
 }
 
+# Install Mesh Foundation addon
+install_mesh_addon() {
+    print_step "Installing Mesh Foundation addon..."
+
+    # Create addon directory if needed
+    mkdir -p addon
+
+    if [ "$LOCAL_TEST" == "1" ]; then
+        # Local test mode - copy local addon file
+        LOCAL_MESH_ADDON_DIR="${SCRIPT_DIR}/mimOE-addon-mesh-foundation"
+        MESH_ADDON_FILE=$(find "$LOCAL_MESH_ADDON_DIR" -name "*.addon" 2>/dev/null | head -1)
+        if [ -z "$MESH_ADDON_FILE" ]; then
+            print_error "No mesh addon file found in $LOCAL_MESH_ADDON_DIR"
+            exit 1
+        fi
+        print_success "Using local mesh addon: $(basename "$MESH_ADDON_FILE")"
+        cp "$MESH_ADDON_FILE" addon/
+        MESH_ADDON_BASENAME=$(basename "$MESH_ADDON_FILE" .addon)
+    else
+        # Production mode - download from GitHub
+        local mesh_addon_filename=$(basename "$MESH_ADDON_URL")
+        echo "  Downloading mesh addon..."
+        curl -L --progress-bar -o "addon/$mesh_addon_filename" "$MESH_ADDON_URL"
+
+        # Check if download failed (file contains "Not Found" or is HTML)
+        if grep -q "Not Found\|<!DOCTYPE\|<html" "addon/$mesh_addon_filename" 2>/dev/null; then
+            print_error "Download failed - file not found at URL: $MESH_ADDON_URL"
+            rm -f "addon/$mesh_addon_filename"
+            exit 1
+        fi
+
+        MESH_ADDON_BASENAME="${mesh_addon_filename%.addon}"
+    fi
+
+    # Create .ini file for custom configuration
+    create_mesh_addon_ini "$MESH_ADDON_BASENAME"
+
+    print_success "Mesh Foundation addon installed"
+}
+
+# Create custom .ini configuration for the mesh addon
+create_mesh_addon_ini() {
+    local addon_name=$1
+    local ini_file="addon/${addon_name}.ini"
+
+    print_step "Creating mesh addon configuration (${addon_name}.ini)..."
+
+    cat > "$ini_file" << 'EOF'
+# Mesh Foundation addon configuration
+# This file customizes environment variables for the addon mims.
+# See: https://developer.mimik.com/docs/api/mcm#environment-variables
+
+[minsight-v1]
+# API key for local development (any value works for local usage)
+API_KEY=1234
+EOF
+
+    print_success "Mesh configuration file created"
+}
+
 # Start mimOE runtime
 start_runtime() {
     print_step "Starting mimOE runtime..."
@@ -456,7 +519,8 @@ main() {
         -H "Content-Type: application/json" \
         -d '{"jsonrpc":"2.0","method":"getMe","id":1}' > /dev/null 2>&1; then
         print_success "mimOE is already running"
-        provision_model
+        print_warning "Skipping model provisioning (mimOE already running from another location)"
+        print_warning "To provision a model, stop the running instance first: pkill -f mimoe"
         print_ready_message
         exit 0
     fi
@@ -464,6 +528,9 @@ main() {
     # Check if already installed in current folder
     if [ -f "start.sh" ]; then
         print_warning "mimOE appears to be already installed"
+        echo "Ensuring addons are installed..."
+        install_addon
+        install_mesh_addon
         echo "Starting runtime and provisioning model..."
         start_runtime
         provision_model
@@ -474,6 +541,7 @@ main() {
     detect_platform
     install_runtime
     install_addon
+    install_mesh_addon
     start_runtime
     provision_model
     print_ready_message
