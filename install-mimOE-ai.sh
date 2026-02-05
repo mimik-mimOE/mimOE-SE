@@ -109,7 +109,6 @@ progress_bar() {
 detect_platform() {
     OS=$(uname -s)
     ARCH=$(uname -m)
-    TEGRA=$(uname -r |grep tegra)
 
     if [ "$OS" == "Darwin" ]; then
         if [ "$ARCH" == "arm64" ]; then
@@ -124,6 +123,7 @@ detect_platform() {
             PLATFORM="linux-x64"
             RUNTIME_URL="$LINUX_AMD64_URL"
         elif [ "$ARCH" == "aarch64" ]; then
+            TEGRA=$(uname -r |grep tegra)
             PLATFORM="linux-arm64"
             if [ -z "$TEGRA" ]; then
                RUNTIME_URL="$LINUX_ARM64_URL"
