@@ -15,7 +15,7 @@ REM Requirements: Windows 10 1803+ (has curl.exe and tar.exe built-in)
 REM #######################################################################
 
 REM Configuration
-set VERSION=3.20.0-preview.2
+set VERSION=3.20.0
 set API_KEY=1234
 set DEFAULT_MODEL_ID=smollm2-360m
 set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true
