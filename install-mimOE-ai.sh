@@ -29,6 +29,7 @@ LOCAL_ADDON_URL="${LOCAL_HTTP_BASE}/mimOE-addon-ai-foundation/ai-foundation-1.7.
 PROD_MACOS_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-macOS-developer-ARM64-v${VERSION}.zip"
 PROD_LINUX_AMD64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-X86_64-VULKAN-v${VERSION}.tar"
 PROD_LINUX_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-ARM64-v${VERSION}.tar"
+PROD_LINUX_ARM64_CUDA_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-ARM64-CUDA-v${VERSION}.tar"
 PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.7.0.addon"
 PROD_MESH_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon"
 
@@ -41,6 +42,7 @@ else
     MACOS_ARM64_URL="$PROD_MACOS_ARM64_URL"
     LINUX_AMD64_URL="$PROD_LINUX_AMD64_URL"
     LINUX_ARM64_URL="$PROD_LINUX_ARM64_URL"
+    LINUX_ARM64_CUDA_URL="$PROD_LINUX_ARM64_CUDA_URL"
     ADDON_URL="$PROD_ADDON_URL"
     MESH_ADDON_URL="$PROD_MESH_ADDON_URL"
 fi
@@ -107,6 +109,7 @@ progress_bar() {
 detect_platform() {
     OS=$(uname -s)
     ARCH=$(uname -m)
+    TEGRA=$(uname -r |grep tegra)
 
     if [ "$OS" == "Darwin" ]; then
         if [ "$ARCH" == "arm64" ]; then
@@ -122,7 +125,12 @@ detect_platform() {
             RUNTIME_URL="$LINUX_AMD64_URL"
         elif [ "$ARCH" == "aarch64" ]; then
             PLATFORM="linux-arm64"
-            RUNTIME_URL="$LINUX_ARM64_URL"
+            if [ -z "$TEGRA" ]; then
+               RUNTIME_URL="$LINUX_ARM64_URL"
+            else
+               RUNTIME_URL="$LINUX_ARM64_CUDA_URL"
+            fi
+#            RUNTIME_URL="$LINUX_ARM64_URL"
         else
             print_error "Unsupported architecture for Linux: $ARCH"
             exit 1
