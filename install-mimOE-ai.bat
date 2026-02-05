@@ -27,7 +27,7 @@ set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/ai-foundation-1.
 
 REM Remote URLs (production)
 set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-developer-AMD64-VULKAN-v%VERSION%.zip
-set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.7.0.addon
+set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.8.0.addon
 set PROD_MESH_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon
 
 REM Select URLs based on mode
@@ -72,7 +72,8 @@ if %ERRORLEVEL%==0 (
 )
 
 REM Check if already installed in current folder
-if exist "start.bat" (
+REM if exist "start.bat" (
+if exist "mimoe.exe" (
     echo [!] mimOE appears to be already installed
     echo Ensuring addons are installed...
     call :install_addon
