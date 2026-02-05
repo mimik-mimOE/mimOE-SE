@@ -534,7 +534,8 @@ main() {
     fi
 
     # Check if already installed in current folder
-    if [ -f "start.sh" ]; then
+    if [ -e "mimoe" -o -e "mimoe.exe" ]; then
+#    if [ -f "start.sh" ]; then
         print_warning "mimOE appears to be already installed"
         echo "Ensuring addons are installed..."
         install_addon
