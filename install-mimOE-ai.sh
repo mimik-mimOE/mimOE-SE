@@ -14,7 +14,7 @@
 set -e
 
 # Configuration
-VERSION="3.20.0-preview.2"
+VERSION="3.20.0"
 API_KEY="1234"
 DEFAULT_MODEL_ID="smollm2-360m"
 DEFAULT_MODEL_URL="https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true"
