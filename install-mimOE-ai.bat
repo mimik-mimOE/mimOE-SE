@@ -157,8 +157,9 @@ REM Hardcode addon filename (URL parsing unreliable in batch)
 set ADDON_FILENAME=%ADDON_AI_FILENAME%
 REM set ADDON_FILENAME=ai-foundation-1.8.1.addon
 
-echo  ADDON_FILENAME: %ADDON_FILENAME%
-echo  ADDON_AI_FILENAME: %ADDON_AI_FILENAME%
+TIMEOUT /T 1 /NOBREAK > NUL
+REM echo  ADDON_FILENAME: %ADDON_FILENAME%
+REM echo  ADDON_AI_FILENAME: %ADDON_AI_FILENAME%
 
 echo     Downloading addon...
 curl -L --progress-bar -o "addon\%ADDON_FILENAME%" "%ADDON_URL%"
