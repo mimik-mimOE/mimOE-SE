@@ -154,7 +154,8 @@ echo ==^> Installing AI Foundation addon...
 if not exist "addon" mkdir addon
 
 REM Hardcode addon filename (URL parsing unreliable in batch)
-set ADDON_FILENAME=%ADDON_AI_FILENAME%
+REM set ADDON_FILENAME=%ADDON_AI_FILENAME%
+set ADDON_FILENAME=ai-foundation-1.8.1.addon
 REM set ADDON_FILENAME=ai-foundation-1.6.1.addon
 
 echo     Downloading addon...
