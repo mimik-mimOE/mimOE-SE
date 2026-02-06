@@ -23,11 +23,11 @@ set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Ins
 REM Local HTTP server for testing (run: python -m http.server 8000)
 set LOCAL_HTTP_BASE=http://localhost:8000
 set LOCAL_WINDOWS_URL=%LOCAL_HTTP_BASE%/mimOE-SE/mimOE-ai-SE-windows-developer-x64-v3.18.0.zip
-set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/ai-foundation-1.6.1.addon
+set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/ai-foundation-1.8.1.addon
 
 REM Remote URLs (production)
 set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-developer-AMD64-VULKAN-v%VERSION%.zip
-set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.8.0.addon
+set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.8.1.addon
 set PROD_MESH_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon
 
 REM Select URLs based on mode
