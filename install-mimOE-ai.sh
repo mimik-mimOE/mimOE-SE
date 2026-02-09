@@ -604,7 +604,7 @@ provision_model() {
         done
 
     # Clear progress line and show success
-    printf "\r%-60s\r" " "
+    printf "\r%-76s\r" " "
     print_success "Model download complete"
 
     # Step 4: Wait for model to be ready
