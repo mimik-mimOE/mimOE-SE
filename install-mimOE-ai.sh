@@ -12,6 +12,115 @@
 #######################################################################
 
 set -e
+# Initialize INSTALL_DIR at the very top
+INSTALL_DIR=$(pwd)
+CREATED_DIR=""
+INSTALLED=false
+MIMOE_LOG="./.edge/logs/mimikEdge.log"
+
+prepare_install_dir() {
+    # Check if current directory is empty (ignoring . and ..)
+    # ls -A lists all files; if the output is empty, the directory is empty.
+    if [ -n "$(ls -A)" ]; then
+        # Current directory is NOT empty
+        if [ ! -d "mimOE" ]; then
+            # No mimOE folder. Create it.
+            NEW_DIR="mimOE"
+            mkdir -p "$NEW_DIR"
+            cd "$NEW_DIR"
+            CREATED_DIR=$(pwd)
+        elif [ -z "$(ls -A mimOE 2>/dev/null)" ]; then
+            # mimOE exists and is empty. Use it.
+            NEW_DIR="mimOE"
+            cd "$NEW_DIR"
+        else
+            # mimOE is occupied. Create a new one with timestamp.
+            NEW_DIR="mimOE_$(date +%H%M%S)"
+            mkdir -p "$NEW_DIR"
+            cd "$NEW_DIR"
+            CREATED_DIR=$(pwd)
+        fi
+    fi
+    # Important update INSTALL_DIR with the current directory again
+    INSTALL_DIR=$(pwd)
+    # echo "[+] Installing mimoe in directory: $INSTALL_DIR"
+}
+
+cleanup_new_dir() {
+    if [ -n "$CREATED_DIR" ]; then
+        # Get absolute path of current location
+        local current_dir=$(pwd)
+
+        # Only proceed if we are actually inside the directory we created
+        if [ "$current_dir" = "$CREATED_DIR" ]; then
+            # Check if it's empty
+            if [ -z "$(ls -A "$CREATED_DIR" 2>/dev/null)" ]; then
+                cd ..
+                rmdir "$CREATED_DIR"
+            fi
+        fi
+    fi
+}
+
+create_mimoe_status_script_file() {
+  # Use 'EOF' in quotes to prevent the current shell from expanding variables
+  cat << 'EOF' > status.sh
+#!/bin/bash
+# Get the PID 
+PID=$(pgrep -f mimoe | head -n 1)
+
+# Get the API status 
+GET_ME=$(curl -s "http://localhost:8083/jsonrpc/v1" -X POST -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"getMe","id":1}' 2>/dev/null)
+
+if [ -n "$PID" ]; then
+    if [[ "$GET_ME" == *"version"* ]]; then
+        # Extract version without a JSON parser 
+        VERSION=$(echo "$GET_ME" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+        echo "mimoe [pid = $PID, version = $VERSION] is running"
+    else
+        # Found PID but API failed 
+        echo "mimoe [pid = $PID] is running"
+    fi
+elif [[ "$GET_ME" == *"version"* ]]; then
+    # Found API but PID hidden 
+    VERSION=$(echo "$GET_ME" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+    echo "mimoe [version = $VERSION] is running"
+else
+    echo "mimoe is not running"
+fi
+EOF
+  chmod +x status.sh
+}
+
+start_bg() {
+    # Define the command with full redirection
+    # This ensures nohup returns back to the script immediately
+    if command -v nohup >/dev/null 2>&1; then
+        nohup ./start.sh < /dev/null > /dev/null 2>&1 &
+        #echo "[+] Started with nohup (Detached)"
+        echo -e "${GREEN}✓${NC} Started mimoe with nohup (Detached)."
+    else
+        # Fallback for systems without nohup
+        ./start.sh > /dev/null 2>&1 &
+        MIMOE_PID=$!
+        
+        if help disown >/dev/null 2>&1 || builtin type disown >/dev/null 2>&1; then
+            disown $MIMOE_PID
+            #echo "[+] Started and disowned (PID: $MIMOE_PID)"
+            echo -e "${GREEN}✓${NC} Started mimoe and disowned (PID: $MIMOE_PID)."
+        else
+            shopt -u huponexit 2>/dev/null || true
+            #echo "[+] Started with IO redirection"
+            echo -e "${GREEN}✓${NC} Started mimoe in background with IO redirection."
+        fi
+    fi
+}
+
+
+# prepare_install_dir checks if current directory is empty else create a new
+# empty folder mimOE or mimOE_datetime and cd to it.
+
+prepare_install_dir
 
 # Configuration
 VERSION="3.20.0"
@@ -106,31 +215,66 @@ progress_bar() {
 }
 
 # Detect OS and architecture
+check_ubuntu_compatibility() {
+
+    # Check for Ubuntu or Ubuntu-based derivatives safely
+    if [ -f /etc/os-release ]; then
+        # Search the whole file for "ubuntu" to catch ID, ID_LIKE, or NAME
+        if grep -qi "ubuntu" /etc/os-release; then
+            
+            # Extract only the VERSION_ID (e.g., "20.04" or "22.04.1")
+            DISTRO_VER=$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+            
+            # Extract the Major version integer (e.g., "20")
+            MAJOR_VER=$(echo "$DISTRO_VER" | cut -d. -f1)
+
+            # If it's anything less than 22 (21, 20, 18...), it lacks GLIBC 2.34
+            if [ "$MAJOR_VER" -lt 22 ]; then
+                compatible=false
+                print_error "Unsupported Ubuntu ($DISTRO_VER) OS Version. Ubuntu 22.04+ required for GLIBC 2.34 compatibility."
+                exit 1
+            fi
+        fi
+    fi
+}
+
 detect_platform() {
-    OS=$(uname -s)
+    # Normalize OS to lowercase for safe comparison
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
     ARCH=$(uname -m)
 
-    if [ "$OS" == "Darwin" ]; then
-        if [ "$ARCH" == "arm64" ]; then
+    if [ "$OS" = "darwin" ]; then
+        if [ "$ARCH" = "arm64" ]; then
             PLATFORM="macos-arm64"
             RUNTIME_URL="$MACOS_ARM64_URL"
         else
             print_error "macOS Intel (x86_64) is not supported. Apple Silicon (ARM64) required."
             exit 1
         fi
-    elif [ "$OS" == "Linux" ]; then
-        if [ "$ARCH" == "x86_64" ]; then
+    elif [ "$OS" = "linux" ]; then
+        if [ "$ARCH" = "x86_64" ]; then
             PLATFORM="linux-x64"
             RUNTIME_URL="$LINUX_AMD64_URL"
-        elif [ "$ARCH" == "aarch64" ]; then
-            TEGRA=$(uname -r |grep tegra)
+
+            check_ubuntu_compatibility
+
+        elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+            # 1. Primary Tegra check: Kernel string
+            TEGRA=$(uname -r | grep -i tegra)
+
+            # 2. Check device-tree model (more robust)
+            if [ -z "$TEGRA" ] && [ -f /proc/device-tree/model ]; then
+                TEGRA=$(grep -i "tegra" /proc/device-tree/model 2>/dev/null)
+            fi
+
             PLATFORM="linux-arm64"
             if [ -z "$TEGRA" ]; then
+               # Standard ARM64 Linux
                RUNTIME_URL="$LINUX_ARM64_URL"
             else
+               # NVIDIA Tegra/Jetson specific build
                RUNTIME_URL="$LINUX_ARM64_CUDA_URL"
             fi
-#            RUNTIME_URL="$LINUX_ARM64_URL"
         else
             print_error "Unsupported architecture for Linux: $ARCH"
             exit 1
@@ -186,6 +330,12 @@ install_runtime() {
 
     if [ -f "start.sh" ]; then
         print_success "Runtime installed"
+
+        # create stop.sh script
+        echo "pkill -f mimoe" > stop.sh && chmod +x stop.sh
+
+        # create status.sh script
+        create_mimoe_status_script_file
     else
         print_error "Runtime installation failed - start.sh not found"
         exit 1
@@ -329,12 +479,9 @@ EOF
 start_runtime() {
     print_step "Starting mimOE runtime..."
 
-    # Create log directory
-    mkdir -p logs
-
-    # Start in background, redirect output to log file
-    ./start.sh > logs/mimoe.log 2>&1 &
-    MIMOE_PID=$!
+    # Start in background.
+    #./start.sh > /dev/null 2>&1 &
+    start_bg
 
     # Wait for runtime to be ready with spinner
     local max_attempts=30
@@ -346,7 +493,7 @@ start_runtime() {
             -H "Content-Type: application/json" \
             -d '{"jsonrpc":"2.0","method":"getMe","id":1}' > /dev/null 2>&1; then
             printf "\r%-60s\r" " "
-            print_success "mimOE runtime is ready (logs: logs/mimoe.log)"
+            print_success "mimOE runtime is ready (logs: $MIMOE_LOG)"
             return 0
         fi
         sleep 1
@@ -354,7 +501,7 @@ start_runtime() {
     done
 
     printf "\r%-60s\r" " "
-    print_error "Timeout waiting for runtime to start. Check logs/mimoe.log"
+    print_error "Timeout waiting for runtime to start. Check ./.edge/logs/mimikEdge.log"
     exit 1
 }
 
@@ -378,7 +525,7 @@ provision_model() {
     printf "\r%-60s\r" " "
 
     if [ $wait_count -ge $max_wait ]; then
-        print_error "Timeout waiting for AI Foundation addon. Check logs/mimoe.log"
+        print_error "Timeout waiting for AI Foundation addon. Check $MIMOE_LOG"
         exit 1
     fi
 
@@ -498,12 +645,41 @@ print_ready_message() {
     \"messages\": [{\"role\": \"user\", \"content\": \"Write a haiku about AI\"}]
   }'${NC}"
     echo ""
-    echo -e "${BLUE}To stop mimOE:${NC}  pkill -f mimoe"
-    echo -e "${BLUE}To restart:${NC}    ./start.sh > logs/mimoe.log 2>&1 &"
-    echo -e "${BLUE}View logs:${NC}     tail -f logs/mimoe.log"
+    echo -e "${BLUE}To stop mimOE (universal):${NC}    pkill -f mimoe"
     echo ""
+    if [ "$INSTALLED" = true ]; then
+	echo -e "${BLUE} cd to the mimOE installed directory ${NC}"
+	echo -e "  cd $INSTALL_DIR"
+	echo ""
+	echo -e "${BLUE}To stop mimOE (local):${NC}        ./stop.sh"
+	echo -e "${BLUE}To restart (background):${NC}      ./stop.sh; ./start.sh > /dev/null 2>&1 &"
+	echo -e "${BLUE}To get mimoe status:${NC}          ./status.sh"
+	echo -e "${BLUE}To view logs (follow):${NC}        tail -f $MIMOE_LOG"
+	echo ""
+    fi
     echo "Documentation: https://developer.mimik.com/docs/ai-foundation"
     echo ""
+}
+
+print_mimoe_status() {
+    local get_me_info
+    get_me_info=$(curl -s "http://localhost:8083/jsonrpc/v1" -X POST \
+        -H "Content-Type: application/json" \
+        -d '{"jsonrpc":"2.0","method":"getMe","id":1}' 2>/dev/null)
+
+    local pid version
+    pid=$(pgrep -f mimoe | head -n 1)
+
+    if [[ "$get_me_info" == *"version"* ]]; then
+        version=$(echo "$get_me_info" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+        if [ -n "$pid" ]; then
+            print_success "mimOE [pid = $pid, version = $version] is already running"
+        else
+            print_success "mimOE [version = $version] is already running"
+        fi
+    elif [ -n "$pid" ]; then
+        print_success "mimOE [pid = $pid] is already running"
+    fi
 }
 
 # Main installation flow
@@ -526,28 +702,22 @@ main() {
     if curl -s "http://localhost:8083/jsonrpc/v1" -X POST \
         -H "Content-Type: application/json" \
         -d '{"jsonrpc":"2.0","method":"getMe","id":1}' > /dev/null 2>&1; then
-        print_success "mimOE is already running"
+        #print_success "mimOE is already running"
+        print_mimoe_status
+
         print_warning "Skipping model provisioning (mimOE already running from another location)"
         print_warning "To provision a model, stop the running instance first: pkill -f mimoe"
         print_ready_message
-        exit 0
-    fi
-
-    # Check if already installed in current folder
-    if [ -e "mimoe" ]; then
-#    if [ -f "start.sh" ]; then
-        print_warning "mimOE appears to be already installed"
-        echo "Ensuring addons are installed..."
-        install_addon
-        install_mesh_addon
-        echo "Starting runtime and provisioning model..."
-        start_runtime
-        provision_model
-        print_ready_message
+        cleanup_new_dir
         exit 0
     fi
 
     detect_platform
+
+    print_success "Installing mimoe in directory: $INSTALL_DIR"
+    # set installation logic
+    INSTALLED=true
+
     install_runtime
     install_addon
     install_mesh_addon
