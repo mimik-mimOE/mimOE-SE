@@ -18,10 +18,12 @@ REM Initialize global installation path INSTALL_DIR
 set "INSTALL_DIR=%CD%"
 set "CREATED_DIR="
 set INSTALLED=false
-set "MIMOE_LOG=.edge\logs\mimikEdge.log"
+set "MIMOE_LOG=.edge\logs\mimoe.log"
+REM Initialize at the top level
+set "INVALID_FOLDER=false"
 
 REM Invoke the directory preparation function
-call :prepare_install_dir
+REM call :prepare_install_dir
 
 REM Configuration
 set VERSION=3.20.0
@@ -67,6 +69,11 @@ echo ======================================================
 echo        mimOE AI Foundation Installer for Windows
 echo ======================================================
 echo.
+
+call :enforce_empty_install_dir
+if "%INVALID_FOLDER%"=="true" (
+    exit /b 1
+)
 
 if "%LOCAL_HTTP%"=="1" (
     echo [!] Running in LOCAL HTTP mode ^(%LOCAL_HTTP_BASE%^)
@@ -453,10 +460,10 @@ echo.
 echo Test your setup:
 echo.
 echo   Command Prompt:
-echo   curl -X POST "http://localhost:8083/mimik-ai/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer %API_KEY%" -d "{\"model\":\"%DEFAULT_MODEL_ID%\",\"messages\":[{\"role\":\"user\",\"content\":\"Write a haiku about AI\"}]}"
+echo   curl -X POST "http://localhost:8083/mimik-ai/openai/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer %API_KEY%" -d "{\"model\":\"%DEFAULT_MODEL_ID%\",\"messages\":[{\"role\":\"user\",\"content\":\"Complete this sentence: AI is like a\"}]}"
 echo.
 echo   PowerShell:
-echo   Invoke-RestMethod -Uri "http://localhost:8083/mimik-ai/openai/v1/chat/completions" -Method Post -ContentType "application/json" -Headers @{Authorization="Bearer %API_KEY%"} -Body '{"model":"%DEFAULT_MODEL_ID%","messages":[{"role":"user","content":"Write a haiku about AI"}]}' ^| ConvertTo-Json -Depth 5
+echo   Invoke-RestMethod -Uri "http://localhost:8083/mimik-ai/openai/v1/chat/completions" -Method Post -ContentType "application/json" -Headers @{Authorization="Bearer %API_KEY%"} -Body '{"model":"%DEFAULT_MODEL_ID%","messages":[{"role":"user","content":"Complete this sentence: AI is like a"}]}' ^| ConvertTo-Json -Depth 5
 echo.
 echo To stop mimOE ^(universal^):    taskkill /f /im mimoe.exe /T
 echo.
@@ -560,4 +567,29 @@ if defined T_GET_ME (
     )
     if defined T_PID ( echo [+] mimoe [pid = !T_PID!, version = !T_VER!] is already running ) else ( echo [+] mimoe [version = !T_VER!] is already running )
 ) else if defined T_PID ( echo [+] mimoe [pid = !T_PID!] is already running )
+exit /b 0
+
+:enforce_empty_install_dir
+set "INSTALLER_NAME=install-mimOE-ai.bat"
+set "FILE_COUNT=0"
+set "INVALID_FOLDER=false"
+
+for /f "delims=" %%A in ('dir /b /a-d') do (
+    set /a FILE_COUNT+=1
+    
+    REM Rule 1: More than one file
+    if !FILE_COUNT! GTR 1 (set "INVALID_FOLDER=true")
+    
+    REM Rule 2: Wrong name
+    if /i "%%A" NEQ "%INSTALLER_NAME%" (set "INVALID_FOLDER=true")
+
+    if "!INVALID_FOLDER!"=="true" (
+        REM echo [x] Error: Our installer requires an empty directory/folder. Run this from an empty folder.
+        echo [x] Error: Installation directory/folder is not empty. It has files other than this installer.
+        echo [x] Our installer requires an empty directory - not even hidden files. Run this from an empty folder.
+        echo.
+        REM Exit the function early
+        exit /b 1
+    )
+)
 exit /b 0
