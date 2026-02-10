@@ -16,7 +16,8 @@ set -e
 INSTALL_DIR=$(pwd)
 CREATED_DIR=""
 INSTALLED=false
-MIMOE_LOG="./.edge/logs/mimikEdge.log"
+MIMOE_LOG="./.edge/logs/mimoe.log"
+INVALID_FOLDER=false
 
 prepare_install_dir() {
     # Check if current directory is empty (ignoring . and ..)
@@ -116,11 +117,35 @@ start_bg() {
     fi
 }
 
+enforce_empty_install_dir() {
+    local installer_part="install-mimOE-ai"
+    local total_files=$(ls -A | wc -l)
+    INVALID_FOLDER=false
+
+    # Condition 1: If there are 2 or more files, it's definitely not empty.
+    if [ "$total_files" -gt 1 ]; then
+        INVALID_FOLDER=true
+    
+    # Condition 2: If there is exactly 1 file, it must be the installer.
+    # If it's NOT the installer, then the folder is "not empty" of junk.
+    elif [ "$total_files" -eq 1 ] && ! ls -A | grep -q "$installer_part"; then
+        INVALID_FOLDER=true
+    fi
+
+    # If either check failed, print the message and exit
+    #if [ "$INVALID_FOLDER" = true ]; then
+    #   print_error "Error: Installation Directory is not empty."
+    #   print_error "Our installer requires an empty directory. Run this from an empty folder."
+        # exit 1
+    #fi
+
+}
+
 
 # prepare_install_dir checks if current directory is empty else create a new
 # empty folder mimOE or mimOE_datetime and cd to it.
+#prepare_install_dir
 
-prepare_install_dir
 
 # Configuration
 VERSION="3.20.0"
@@ -233,7 +258,6 @@ check_ubuntu_compatibility() {
 
             # If it's anything less than 22 (21, 20, 18...), it lacks GLIBC 2.34
             if [ "$MAJOR_VER" -lt 22 ]; then
-                compatible=false
                 print_error "Unsupported Ubuntu ($DISTRO_VER) OS Version. Ubuntu 22.04+ required for GLIBC 2.34 compatibility."
                 exit 1
             fi
@@ -645,7 +669,7 @@ print_ready_message() {
   -H \"Authorization: Bearer ${API_KEY}\" \\
   -d '{
     \"model\": \"${DEFAULT_MODEL_ID}\",
-    \"messages\": [{\"role\": \"user\", \"content\": \"Write a haiku about AI\"}]
+    \"messages\": [{\"role\": \"user\", \"content\": \"Complete this sentence: AI is like a\"}]
   }'${NC}"
     echo ""
     echo -e "${BLUE}To stop mimOE (universal):${NC}    pkill -f mimoe"
@@ -692,6 +716,14 @@ main() {
     echo "║     mimOE AI Foundation Installer            ║"
     echo "╚══════════════════════════════════════════════╝"
     echo ""
+
+    enforce_empty_install_dir
+    if [ "$INVALID_FOLDER" = true ]; then
+       print_error "Error: Installation directory/folder is not empty. It has files other than this installer."
+       print_error "Our installer requires an empty directory - not even hidden files. Run this from an empty folder."
+       echo
+       exit 0
+    fi
 
     if [ "$LOCAL_TEST" == "1" ]; then
         print_warning "Running in LOCAL TEST mode (file copy)"
