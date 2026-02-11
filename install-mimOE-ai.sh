@@ -63,6 +63,45 @@ cleanup_new_dir() {
     fi
 }
 
+create_mimoe_stop_script_file() {
+    cat << 'EOF' > stop.sh
+#!/bin/bash
+# Check if mimoe is running
+if pgrep -f mimoe > /dev/null; then
+    echo
+    echo "Stopping mimoe..."
+    echo
+    pkill -f mimoe
+
+    # Verification loop: 5 attempts with 1s sleep
+    STOPPED=false
+    for i in {1..5}; do
+        if ! pgrep -f mimoe > /dev/null; then
+            STOPPED=true
+            break
+        fi
+        echo "Waiting for mimoe to exit... ($i/5)"
+        sleep 1
+    done
+
+    if [ "$STOPPED" = true ]; then
+        echo
+        echo "mimoe stopped successfully."
+        echo
+    else
+        echo
+        echo "mimoe is still running after 5 seconds."
+        echo
+    fi
+else
+    echo
+    echo "mimoe is not running"
+    echo
+fi
+EOF
+    chmod +x stop.sh
+}
+
 create_mimoe_status_script_file() {
   # Use 'EOF' in quotes to prevent the current shell from expanding variables
   cat << 'EOF' > status.sh
@@ -77,17 +116,25 @@ if [ -n "$PID" ]; then
     if [[ "$GET_ME" == *"version"* ]]; then
         # Extract version without a JSON parser 
         VERSION=$(echo "$GET_ME" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+        echo
         echo "mimoe [pid = $PID, version = $VERSION] is running"
+        echo
     else
         # Found PID but API failed 
+        echo
         echo "mimoe [pid = $PID] is running"
+        echo
     fi
 elif [[ "$GET_ME" == *"version"* ]]; then
     # Found API but PID hidden 
     VERSION=$(echo "$GET_ME" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+    echo
     echo "mimoe [version = $VERSION] is running"
+    echo
 else
+    echo
     echo "mimoe is not running"
+    echo
 fi
 EOF
   chmod +x status.sh
@@ -117,7 +164,7 @@ start_bg() {
     fi
 }
 
-enforce_empty_install_dir() {
+enforce_empty_install_dir_ori() {
     local installer_part="install-mimOE-ai"
     local total_files=$(ls -A | wc -l)
     INVALID_FOLDER=false
@@ -139,6 +186,54 @@ enforce_empty_install_dir() {
         # exit 1
     #fi
 
+}
+
+enforce_empty_install_filecount_dir() {
+    local invoked_name=$(basename "$0")
+    local file_count=0
+    INVALID_FOLDER=false
+
+    # ls -A lists everything (files and folders)
+    for item in $(ls -A 2>/dev/null); do
+        ((file_count++))
+        
+        is_installer=false
+        case "$item" in
+            "install.sh"|"install-mimOE-ai.sh"|"$invoked_name"|"bash"|"sh"|"stdin")
+                is_installer=true
+                ;;
+        esac
+
+        # If it's not one of our installers OR count > 2, fail
+        if [ "$is_installer" = false ] || [ "$file_count" -gt 2 ]; then
+            INVALID_FOLDER=true
+            #echo [x] Found unexpected item: $item
+            print_error "Found unexpected item: $item"
+            break
+        fi
+    done
+}
+
+enforce_empty_install_dir() {
+    local invoked_name=$(basename "$0")
+    INVALID_FOLDER=false
+
+    for item in $(ls -A 2>/dev/null); do
+        is_installer=false
+        
+        case "$item" in
+            "install.sh" | "install-mimOE-ai.sh" | "$invoked_name" | "bash" | "sh" | "stdin")
+                is_installer=true
+                ;;
+        esac
+
+        if [ "$is_installer" = false ]; then
+            INVALID_FOLDER=true
+            #echo "[x] Found unexpected item: $item"
+            print_error "Found unexpected item: $item"
+            break
+        fi
+    done
 }
 
 
@@ -359,7 +454,8 @@ install_runtime() {
         print_success "Runtime installed"
 
         # create stop.sh script
-        echo "pkill -f mimoe" > stop.sh && chmod +x stop.sh
+        #echo "pkill -f mimoe" > stop.sh && chmod +x stop.sh
+        create_mimoe_stop_script_file
 
         # create status.sh script
         create_mimoe_status_script_file
@@ -679,7 +775,9 @@ print_ready_message() {
 	echo -e "  cd $INSTALL_DIR"
 	echo ""
 	echo -e "${BLUE}To stop mimOE (local):${NC}        ./stop.sh"
-	echo -e "${BLUE}To restart (background):${NC}      ./stop.sh; ./start.sh > /dev/null 2>&1 &"
+	#echo -e "${BLUE}To restart (background):${NC}      ./stop.sh > /dev/null; ./start.sh > /dev/null 2>&1 &"
+        echo -e "${BLUE}To restart (background):${NC}      ./stop.sh >/dev/null; ./start.sh >/dev/null 2>&1 & sleep 2; ./status.sh"
+        echo -e "${BLUE}To restart (interactive):${NC}      ./stop.sh ; ./start.sh"
 	echo -e "${BLUE}To get mimoe status:${NC}          ./status.sh"
 	echo -e "${BLUE}To view logs (follow):${NC}        tail -f $MIMOE_LOG"
 	echo ""
