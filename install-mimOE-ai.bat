@@ -146,9 +146,10 @@ del %FILENAME%
 if exist "start.bat" (
     echo [+] Runtime installed
 
-    REM Create stop.bat line by line
-    echo @echo off>stop.bat
-    echo taskkill /f /im mimoe.exe /T>>stop.bat
+    REM - Create stop.bat line by line -
+    REM echo @echo off>stop.bat
+    REM echo taskkill /f /im mimoe.exe /T>>stop.bat
+    call :create_mimoe_stop_script_file
 
     REM Create status.bat line by line
     echo @echo off>status.bat
@@ -471,9 +472,10 @@ if "%INSTALLED%"=="true" (
     echo cd to the mimOE installed directory:
     echo   cd "%INSTALL_DIR%"
     echo.
-    echo To stop mimOE ^(local^):      stop.bat
-    echo To restart ^(background^):    start /b "" cmd /c "stop.bat & start.bat > NUL 2>&1"
-    echo To get mimoe status:        status.bat
+    echo To stop mimOE ^(local^):      .\stop.bat
+    echo To restart ^(background^):    cmd /c "stop.bat & start /b start.bat <nul >nul 2>&1 & timeout /t 2 >nul & status.bat" 
+    echo To restart ^(interactive^):   cmd /c "stop.bat & start.bat"  
+    echo To get mimoe status:        .\status.bat
     echo To view logs:               type "%MIMOE_LOG%"
     echo.
 )
@@ -569,22 +571,30 @@ if defined T_GET_ME (
 ) else if defined T_PID ( echo [+] mimoe [pid = !T_PID!] is already running )
 exit /b 0
 
-:enforce_empty_install_dir
-set "INSTALLER_NAME=install-mimOE-ai.bat"
+:enforce_empty_install_filecount_dir
 set "FILE_COUNT=0"
 set "INVALID_FOLDER=false"
 
-for /f "delims=" %%A in ('dir /b /a-d') do (
+REM 'dir /b /a' includes hidden files AND subdirectories
+for /f "delims=" %%A in ('dir /b /a 2^>nul') do (
     set /a FILE_COUNT+=1
     
-    REM Rule 1: More than one file
-    if !FILE_COUNT! GTR 1 (set "INVALID_FOLDER=true")
+    set "IS_INSTALLER=false"
+    if /i "%%A"=="install.bat" set "IS_INSTALLER=true"
+    if /i "%%A"=="install.sh" set "IS_INSTALLER=true"
+    if /i "%%A"=="install-mimOE-ai.bat" set "IS_INSTALLER=true"
+    if /i "%%A"=="install-mimOE-ai.sh" set "IS_INSTALLER=true"
+    if /i "%%A"=="%~nx0" set "IS_INSTALLER=true"
+
+    REM If it's not an installer name, it's invalid (covers folders like 'xy')
+    if "!IS_INSTALLER!"=="false" (set "INVALID_FOLDER=true")
     
-    REM Rule 2: Wrong name
-    if /i "%%A" NEQ "%INSTALLER_NAME%" (set "INVALID_FOLDER=true")
+    REM If more than 2 total items exist, it's invalid
+    if !FILE_COUNT! GTR 2 (set "INVALID_FOLDER=true")
 
     if "!INVALID_FOLDER!"=="true" (
         REM echo [x] Error: Our installer requires an empty directory/folder. Run this from an empty folder.
+        echo [x] Found unexpected item: %%A
         echo [x] Error: Installation directory/folder is not empty. It has files other than this installer.
         echo [x] Our installer requires an empty directory - not even hidden files. Run this from an empty folder.
         echo.
@@ -593,3 +603,47 @@ for /f "delims=" %%A in ('dir /b /a-d') do (
     )
 )
 exit /b 0
+
+:create_mimoe_stop_script_file
+echo @echo off > stop.bat
+echo tasklist /fi "imagename eq mimoe.exe" 2^>nul ^| findstr /i "mimoe.exe" ^>nul >> stop.bat
+echo if errorlevel 1 echo mimoe is not running. ^& exit /b 0 >> stop.bat
+echo echo Stopping mimoe... >> stop.bat
+echo taskkill /f /im mimoe.exe /t >> stop.bat
+echo for /l %%%%i in (1,1,5) do ( >> stop.bat
+echo     tasklist /fi "imagename eq mimoe.exe" 2^>nul ^| findstr /i "mimoe.exe" ^>nul ^|^| (echo mimoe stopped successfully. ^& exit /b 0) >> stop.bat
+echo     echo Waiting for mimoe to exit... (%%%%i/5) >> stop.bat
+echo     timeout /t 1 /nobreak ^>nul >> stop.bat
+echo ) >> stop.bat
+echo echo mimoe is still running after 5 seconds. >> stop.bat
+echo exit /b 1 >> stop.bat
+exit /b 0
+
+:enforce_empty_install_dir
+set "INVALID_FOLDER=false"
+
+REM 'dir /b /a' includes hidden files AND subdirectories
+for /f "delims=" %%A in ('dir /b /a 2^>nul') do (
+    
+    set "IS_INSTALLER=false"
+    if /i "%%A"=="install.bat" set "IS_INSTALLER=true"
+    if /i "%%A"=="install.sh" set "IS_INSTALLER=true"
+    if /i "%%A"=="install-mimOE-ai.bat" set "IS_INSTALLER=true"
+    if /i "%%A"=="install-mimOE-ai.sh" set "IS_INSTALLER=true"
+    if /i "%%A"=="%~nx0" set "IS_INSTALLER=true"
+
+    REM If it's not an installer name, it's invalid (covers folders like 'xy')
+    if "!IS_INSTALLER!"=="false" (set "INVALID_FOLDER=true")
+
+    if "!INVALID_FOLDER!"=="true" (
+        REM echo [x] Error: Our installer requires an empty directory/folder. Run this from an empty folder.
+        echo [x] Found unexpected item: %%A
+        echo [x] Error: Installation directory/folder is not empty. It has files other than this installer.
+        echo [x] Our installer requires an empty directory - not even hidden files. Run this from an empty folder.
+        echo.
+        REM Exit the function early
+        exit /b 1
+    )
+)
+exit /b 0
+
