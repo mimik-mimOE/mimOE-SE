@@ -34,13 +34,15 @@ set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Ins
 REM Local HTTP server for testing (run: python -m http.server 8000)
 set LOCAL_HTTP_BASE=http://localhost:8000
 set LOCAL_WINDOWS_URL=%LOCAL_HTTP_BASE%/mimOE-SE/mimOE-ai-SE-windows-developer-x64-v3.18.0.zip
-set ADDON_AI_FILENAME=ai-foundation-1.8.1.addon
+set ADDON_AI_VERSION=1.8.3
+set ADDON_AI_FILENAME=ai-foundation-%ADDON_AI_VERSION%.addon
+REM set ADDON_AI_FILENAME=ai-foundation-1.8.1.addon
 set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/%ADDON_AI_FILENAME%
 REM set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/ai-foundation-1.8.1.addon
 
 REM Remote URLs (production)
 set PROD_WINDOWS_URL=https://github.com/mimik-mimOE/mimOE-SE/releases/download/v%VERSION%/mimOE-ai-SE-windows-developer-AMD64-VULKAN-v%VERSION%.zip
-set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/%ADDON_AI_FILENAME%
+set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v%ADDON_AI_VERSION%/%ADDON_AI_FILENAME%
 REM set PROD_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.8.1.addon
 set PROD_MESH_ADDON_URL=https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon
 
