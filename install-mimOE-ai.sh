@@ -251,7 +251,7 @@ DEFAULT_MODEL_URL="https://huggingface.co/lmstudio-community/SmolLM2-360M-Instru
 # Local HTTP server for testing (run: python3 -m http.server 8000)
 # Set LOCAL_HTTP=1 to use these URLs instead of GitHub
 LOCAL_HTTP_BASE="http://localhost:8000"
-ADDON_AI_FILENAME=ai-foundation-1.8.1.addon
+ADDON_AI_FILENAME=ai-foundation-1.8.3.addon
 LOCAL_MACOS_ARM64_URL="${LOCAL_HTTP_BASE}/mimOE-SE/mimOE-ai-SE-macOS-developer-ARM64-v3.18.0-39-g474c155e.tar"
 LOCAL_ADDON_URL="${LOCAL_HTTP_BASE}/mimOE-addon-ai-foundation/$ADDON_AI_FILENAME"
 #LOCAL_ADDON_URL="${LOCAL_HTTP_BASE}/mimOE-addon-ai-foundation/ai-foundation-1.7.0.addon"
