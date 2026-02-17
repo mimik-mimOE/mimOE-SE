@@ -251,7 +251,9 @@ DEFAULT_MODEL_URL="https://huggingface.co/lmstudio-community/SmolLM2-360M-Instru
 # Local HTTP server for testing (run: python3 -m http.server 8000)
 # Set LOCAL_HTTP=1 to use these URLs instead of GitHub
 LOCAL_HTTP_BASE="http://localhost:8000"
-ADDON_AI_FILENAME=ai-foundation-1.8.3.addon
+ADDON_AI_VERSION=1.8.3
+ADDON_AI_FILENAME=ai-foundation-$ADDON_AI_VERSION.addon
+#ADDON_AI_FILENAME=ai-foundation-1.8.3.addon
 LOCAL_MACOS_ARM64_URL="${LOCAL_HTTP_BASE}/mimOE-SE/mimOE-ai-SE-macOS-developer-ARM64-v3.18.0-39-g474c155e.tar"
 LOCAL_ADDON_URL="${LOCAL_HTTP_BASE}/mimOE-addon-ai-foundation/$ADDON_AI_FILENAME"
 #LOCAL_ADDON_URL="${LOCAL_HTTP_BASE}/mimOE-addon-ai-foundation/ai-foundation-1.7.0.addon"
@@ -261,7 +263,7 @@ PROD_MACOS_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/
 PROD_LINUX_AMD64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-X86_64-VULKAN-v${VERSION}.tar"
 PROD_LINUX_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-ARM64-v${VERSION}.tar"
 PROD_LINUX_ARM64_CUDA_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-ARM64-CUDA-v${VERSION}.tar"
-PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.8.1/$ADDON_AI_FILENAME"
+PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/$ADDON_AI_VERSION/$ADDON_AI_FILENAME"
 #PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.8.1.addon"
 PROD_MESH_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon"
 
