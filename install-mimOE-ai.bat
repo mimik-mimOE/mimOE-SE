@@ -26,7 +26,7 @@ REM Invoke the directory preparation function
 REM call :prepare_install_dir
 
 REM Configuration
-set VERSION=3.20.2
+set VERSION=3.22.0
 set API_KEY=1234
 set DEFAULT_MODEL_ID=smollm2-360m
 set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true
