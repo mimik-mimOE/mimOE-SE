@@ -384,12 +384,12 @@ detect_platform() {
 
         elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
             # 1. Primary Tegra check: Kernel string
-            TEGRA=$(uname -r | grep -i tegra)
+            TEGRA=$(uname -r | grep -i tegra || true)
 
             # 2. Check device-tree model (more robust)
-            if [ -z "$TEGRA" ] && [ -f /proc/device-tree/model ]; then
-                TEGRA=$(grep -i "tegra" /proc/device-tree/model 2>/dev/null)
-            fi
+#            if [ -z "$TEGRA" ] && [ -f /proc/device-tree/model ]; then
+#                TEGRA=$(grep -i "tegra" /proc/device-tree/model 2>/dev/null)
+#            fi
 
             PLATFORM="linux-arm64"
             if [ -z "$TEGRA" ]; then
