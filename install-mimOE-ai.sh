@@ -252,6 +252,49 @@ DEFAULT_MODEL_URL="https://huggingface.co/lmstudio-community/SmolLM2-360M-Instru
 # Set LOCAL_HTTP=1 to use these URLs instead of GitHub
 LOCAL_HTTP_BASE="http://localhost:8000"
 ADDON_AI_VERSION=1.8.3
+ADDON_MESH_VERSION=1.0.0
+
+###
+# Use getopts for parsing:
+# h: a flag (no argument required)
+# v,a,m: a flag that requires an argument (indicated by the colon)
+while getopts "hv:a:m:" flag; do
+    case "$flag" in
+        h)
+            echo "Usage: $0 [-h (help)] [-v mimoe version] [-a ai-addon version] [-m mesh-addon version]"
+            exit 0
+            ;;
+        v)
+            VERSION="$OPTARG"
+            ;;
+        a)
+            ADDON_AI_VERSION="$OPTARG"
+            ;;
+        m)
+            ADDON_MESH_VERSION="$OPTARG"
+            ;;
+        ?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Shift off the options so that remaining arguments can be processed
+shift $((OPTIND-1))
+
+# Process remaining positional arguments (if any)
+if [ "$#" -gt 0 ]; then
+    echo "Remaining arguments: $@"
+fi
+
+# Use the parsed options
+echo "Mimoe version: $VERSION"
+echo "AI version: $ADDON_AI_VERSION"
+echo "Mesh version: $ADDON_MESH_VERSION"
+
+###
+
 ADDON_AI_FILENAME=ai-foundation-$ADDON_AI_VERSION.addon
 #ADDON_AI_FILENAME=ai-foundation-1.8.3.addon
 LOCAL_MACOS_ARM64_URL="${LOCAL_HTTP_BASE}/mimOE-SE/mimOE-ai-SE-macOS-developer-ARM64-v3.18.0-39-g474c155e.tar"
@@ -265,7 +308,8 @@ PROD_LINUX_ARM64_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/
 PROD_LINUX_ARM64_CUDA_URL="https://github.com/mimik-mimOE/mimOE-SE/releases/download/v${VERSION}/mimOE-ai-SE-linux-developer-ARM64-CUDA-v${VERSION}.tar"
 PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v$ADDON_AI_VERSION/$ADDON_AI_FILENAME"
 #PROD_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-ai-foundation/releases/download/v1.6.1/ai-foundation-1.8.1.addon"
-PROD_MESH_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon"
+PROD_MESH_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v$ADDON_MESH_VERSION/mesh-foundation-$ADDON_MESH_VERSION.addon"
+#PROD_MESH_ADDON_URL="https://github.com/mimik-mimOE/mimOE-addon-mesh-foundation/releases/download/v1.0.0/mesh-foundation-1.0.0.addon"
 
 # Select URLs based on mode
 if [ "$LOCAL_HTTP" == "1" ]; then
