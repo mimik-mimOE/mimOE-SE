@@ -31,10 +31,28 @@ set API_KEY=1234
 set DEFAULT_MODEL_ID=smollm2-360m
 set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true
 
+set ADDON_AI_VERSION=1.8.3
+set ADDON_MESH_VERSION=1.0.0
+set SCRIPT_NAME=%0
+
+:GETOPTS
+ if /I %~1 == -h echo Usage: %SCRIPT_NAME% -v mimoe-version -a ai_addon-version -m mesh_addon-version  & exit /b 0
+ if /I %~1 == -v set VERSION=%2& shift
+ if /I %~1 == -a set ADDON_AI_VERSION=%2& shift
+ if /I %~1 == -m set ADDON_MESH_VERSION=%2& shift
+ shift
+if not (%1)==() goto GETOPTS
+
+REM echo VERSION: %VERSION%
+REM echo ADDON_AI_VERSION: %ADDON_AI_VERSION%
+REM echo ADDON_MESH_VERSION: %ADDON_MESH_VERSION%
+
+set MESH_ADDON_FILENAME=mesh-foundation-%ADDON_MESH_VERSION%.addon
+
 REM Local HTTP server for testing (run: python -m http.server 8000)
 set LOCAL_HTTP_BASE=http://localhost:8000
 set LOCAL_WINDOWS_URL=%LOCAL_HTTP_BASE%/mimOE-SE/mimOE-ai-SE-windows-developer-x64-v3.18.0.zip
-set ADDON_AI_VERSION=1.8.3
+REM set ADDON_AI_VERSION=1.8.3
 set ADDON_AI_FILENAME=ai-foundation-%ADDON_AI_VERSION%.addon
 REM set ADDON_AI_FILENAME=ai-foundation-1.8.1.addon
 set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/%ADDON_AI_FILENAME%
@@ -243,7 +261,7 @@ echo ==^> Installing Mesh Foundation addon...
 if not exist "addon" mkdir addon
 
 REM Hardcode mesh addon filename
-set MESH_ADDON_FILENAME=mesh-foundation-1.0.0.addon
+REM set MESH_ADDON_FILENAME=mesh-foundation-1.0.0.addon
 
 echo     Downloading mesh addon...
 curl -L --progress-bar -o "addon\%MESH_ADDON_FILENAME%" "%MESH_ADDON_URL%"
