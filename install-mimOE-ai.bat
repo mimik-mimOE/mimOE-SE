@@ -35,6 +35,8 @@ set ADDON_AI_VERSION=1.8.3
 set ADDON_MESH_VERSION=1.0.0
 set SCRIPT_NAME=%0
 
+if "%~1"=="" goto NOOPTS
+
 :GETOPTS
  if /I %~1 == -h echo Usage: %SCRIPT_NAME% -v mimoe-version -a ai_addon-version -m mesh_addon-version  & exit /b 0
  if /I %~1 == -v set VERSION=%2& shift
@@ -43,6 +45,7 @@ set SCRIPT_NAME=%0
  shift
 if not (%1)==() goto GETOPTS
 
+:NOOPTS
 REM echo VERSION: %VERSION%
 REM echo ADDON_AI_VERSION: %ADDON_AI_VERSION%
 REM echo ADDON_MESH_VERSION: %ADDON_MESH_VERSION%
