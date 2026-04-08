@@ -27,7 +27,7 @@ DEFAULT_MODEL_URL="https://huggingface.co/lmstudio-community/SmolLM2-360M-Instru
 
 # Local HTTP server for testing (run: python3 -m http.server 8000)
 LOCAL_HTTP_BASE="http://localhost:8000"
-ADDON_AI_VERSION=1.8.5
+ADDON_AI_VERSION=1.8.9
 ADDON_MESH_VERSION=1.0.1
 ADDON_AI_FILENAME=ai-foundation-$ADDON_AI_VERSION.addon
 
