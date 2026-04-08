@@ -29,7 +29,7 @@ set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Ins
 REM Local HTTP server for testing (run: python -m http.server 8000)
 set LOCAL_HTTP_BASE=http://localhost:8000
 set LOCAL_WINDOWS_URL=%LOCAL_HTTP_BASE%/mimOE-SE/mimOE-ai-SE-windows-developer-x64-v3.18.0.zip
-set ADDON_AI_VERSION=1.8.5
+set ADDON_AI_VERSION=1.8.9
 set ADDON_MESH_VERSION=1.0.1
 set ADDON_AI_FILENAME=ai-foundation-%ADDON_AI_VERSION%.addon
 set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/%ADDON_AI_FILENAME%
