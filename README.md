@@ -1,4 +1,4 @@
-# mimOE-SE v3.20.0 Preview
+# mimOE-SE v3.22.6
 
 mimOE (mimik Operating Environment) Standard Edition - A lightweight runtime for running AI Agents and microservices directly on-device.
 
