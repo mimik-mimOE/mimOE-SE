@@ -53,14 +53,14 @@ Once complete, the API is available at `http://localhost:8083`.
 
 ## Manual Install
 
-Download the appropriate release for your platform from [GitHub Releases](https://github.com/mimik-mimOE/mimOE-SE/releases/tag/v3.20.0):
+Download the appropriate release for your platform from [GitHub Releases](https://github.com/mimik-mimOE/mimOE-SE/releases/tag/v3.22.6):
 
 | Platform | File |
 |----------|------|
-| macOS (Apple Silicon) | `mimOE-SE-macOS-ARM64-v3.20.0.zip` |
-| Linux (x64) | `mimOE-SE-linux-x86_64-v3.20.0.tar` |
-| Linux (ARM64) | `mimOE-SE-linux-ARM64-v3.20.0.tar` |
-| Windows (x64) | `mimOE-SE-windows-x64-v3.20.0.zip` |
+| macOS (Apple Silicon) | `mimOE-SE-macOS-ARM64-v3.22.6.zip` |
+| Linux (x64) | `mimOE-SE-linux-x86_64-v3.22.6.tar` |
+| Linux (ARM64) | `mimOE-SE-linux-ARM64-v3.22.6.tar` |
+| Windows (x64) | `mimOE-SE-windows-x64-v3.22.6.zip` |
 
 ### Extract and Start
 
