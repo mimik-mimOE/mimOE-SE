@@ -21,7 +21,7 @@ set "MIMOE_ADDON=%MIMOE_HOME%\addon"
 set "MIMOE_LOG=%MIMOE_HOME%\.edge\logs\mimoe.log"
 
 REM Configuration
-set VERSION=3.22.8
+set VERSION=3.24.3
 set API_KEY=1234
 set DEFAULT_MODEL_ID=smollm2-360m
 set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true
@@ -29,7 +29,7 @@ set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Ins
 REM Local HTTP server for testing (run: python -m http.server 8000)
 set LOCAL_HTTP_BASE=http://localhost:8000
 set LOCAL_WINDOWS_URL=%LOCAL_HTTP_BASE%/mimOE-SE/mimOE-ai-SE-windows-developer-x64-v3.18.0.zip
-set ADDON_AI_VERSION=1.8.9
+set ADDON_AI_VERSION=1.15.0
 set ADDON_MESH_VERSION=1.0.1
 set ADDON_AI_FILENAME=ai-foundation-%ADDON_AI_VERSION%.addon
 set LOCAL_ADDON_URL=%LOCAL_HTTP_BASE%/mimOE-addon-ai-foundation/%ADDON_AI_FILENAME%
@@ -163,23 +163,25 @@ if %ERRORLEVEL% neq 0 (
 )
 del "%TMPDIR%\%FILENAME%"
 
+xcopy /y /e "%TMPDIR%" "%MIMOE_HOME%\" >nul
+
 REM Copy binary to ~/.mimoe/bin/
-if exist "%TMPDIR%\bin\mimoe.exe" (
-    copy /y "%TMPDIR%\bin\mimoe.exe" "%MIMOE_BIN%\mimoe.exe" >nul
+REM if exist "%TMPDIR%\bin\mimoe.exe" (
+REM     copy /y "%TMPDIR%\bin\mimoe.exe" "%MIMOE_BIN%\mimoe.exe" >nul
     REM ADDED: Copy all DLLs found in the zip's bin folder
-    if exist "%TMPDIR%\bin\*.dll" (
-        copy /y "%TMPDIR%\bin\*.dll" "%MIMOE_BIN%\" >nul
-    )
-) else (
-    echo [x] Runtime binary not found in archive ^(expected bin\mimoe.exe^)
-    rmdir /s /q "%TMPDIR%"
-    exit /b 1
-)
+REM     if exist "%TMPDIR%\bin\*.dll" (
+REM         copy /y "%TMPDIR%\bin\*.dll" "%MIMOE_BIN%\" >nul
+REM     )
+REM ) else (
+REM     echo [x] Runtime binary not found in archive ^(expected bin\mimoe.exe^)
+REM     rmdir /s /q "%TMPDIR%"
+REM     exit /b 1
+REM )
 
 REM Copy license file if present
-for %%F in ("%TMPDIR%\*.lic") do (
-    copy /y "%%F" "%MIMOE_HOME%\" >nul
-)
+REM for %%F in ("%TMPDIR%\*.lic") do (
+REM     copy /y "%%F" "%MIMOE_HOME%\" >nul
+REM )
 
 REM Cleanup temp
 rmdir /s /q "%TMPDIR%"

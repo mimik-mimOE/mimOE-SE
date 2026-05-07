@@ -20,14 +20,14 @@ MIMOE_ADDON="$MIMOE_HOME/addon"
 MIMOE_LOG="$MIMOE_HOME/.edge/logs/mimoe.log"
 
 # Configuration
-VERSION="3.22.8"
+VERSION="3.24.3"
 API_KEY="1234"
 DEFAULT_MODEL_ID="smollm2-360m"
 DEFAULT_MODEL_URL="https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true"
 
 # Local HTTP server for testing (run: python3 -m http.server 8000)
 LOCAL_HTTP_BASE="http://localhost:8000"
-ADDON_AI_VERSION=1.8.9
+ADDON_AI_VERSION=1.15.0
 ADDON_MESH_VERSION=1.0.1
 ADDON_AI_FILENAME=ai-foundation-$ADDON_AI_VERSION.addon
 
@@ -172,8 +172,9 @@ install_runtime() {
     print_step "Installing mimOE runtime..."
 
     # Create directory structure
-    mkdir -p "$MIMOE_BIN"
-    mkdir -p "$MIMOE_ADDON"
+    mkdir "$MIMOE_HOME"
+ #   mkdir -p "$MIMOE_BIN"
+ #   mkdir -p "$MIMOE_ADDON"
 
     # Extract to a temp directory, then copy the binary
     local tmpdir
@@ -213,13 +214,19 @@ install_runtime() {
         rm "$tmpdir/$filename"
     fi
 
+    #Copy content to ~/.mimoe/
+    cp -a "$tmpdir/bin" "$MIMOE_HOME/"
+    cp -a "$tmpdir/addon" "$MIMOE_HOME/"
+    cp -a "$tmpdir/extensions" "$MIMOE_HOME/"
+    cp  "$tmpdir/start.sh" "$MIMOE_HOME/"
+
     # Copy binary to ~/.mimoe/bin/
-    if [ -f "$tmpdir/bin/mimoe" ]; then
-        cp "$tmpdir/bin/mimoe" "$MIMOE_BIN/mimoe"
-    else
-        print_error "Runtime binary not found in archive (expected bin/mimoe)"
-        exit 1
-    fi
+#    if [ -f "$tmpdir/bin/mimoe" ]; then
+#        cp "$tmpdir/bin/mimoe" "$MIMOE_BIN/mimoe"
+#    else
+#        print_error "Runtime binary not found in archive (expected bin/mimoe)"
+#        exit 1
+#    fi
 
     # Copy license file if present
     local lic_file
