@@ -20,7 +20,7 @@ MIMOE_ADDON="$MIMOE_HOME/addon"
 MIMOE_LOG="$MIMOE_HOME/.edge/logs/mimoe.log"
 
 # Configuration
-VERSION="3.24.3"
+VERSION="3.24.4"
 API_KEY="1234"
 DEFAULT_MODEL_ID="smollm2-360m"
 DEFAULT_MODEL_URL="https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true"

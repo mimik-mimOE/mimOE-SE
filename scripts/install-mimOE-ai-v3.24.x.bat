@@ -21,7 +21,7 @@ set "MIMOE_ADDON=%MIMOE_HOME%\addon"
 set "MIMOE_LOG=%MIMOE_HOME%\.edge\logs\mimoe.log"
 
 REM Configuration
-set VERSION=3.24.3
+set VERSION=3.24.4
 set API_KEY=1234
 set DEFAULT_MODEL_ID=smollm2-360m
 set DEFAULT_MODEL_URL=https://huggingface.co/lmstudio-community/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q8_0.gguf?download=true
@@ -163,6 +163,7 @@ if %ERRORLEVEL% neq 0 (
 )
 del "%TMPDIR%\%FILENAME%"
 
+REM Copy content to ~/.mimoe
 xcopy /y /e "%TMPDIR%" "%MIMOE_HOME%\" >nul
 
 REM Copy binary to ~/.mimoe/bin/
