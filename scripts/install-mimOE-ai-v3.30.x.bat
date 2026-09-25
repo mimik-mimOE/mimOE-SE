@@ -168,9 +168,21 @@ call :wait_for_runtime
 set "MAIN_RC=!ERRORLEVEL!"
 if !MAIN_RC! neq 0 goto :fail
 
-call :provision_model
-set "MAIN_RC=!ERRORLEVEL!"
-if !MAIN_RC! neq 0 goto :fail
+%USERPROFILE%\.mimoe\bin\mimoe.exe model ls >%USERPROFILE%\models.txt
+findstr /C:"smollm2-360m" "%USERPROFILE%\models.txt" >nul
+if %errorlevel%==0 (
+    del %USERPROFILE%\models.txt
+    %USERPROFILE%\.mimoe\bin\mimoe.exe model load smollm2-360m
+) else {
+    del %USERPROFILE%\models.txt
+    call :provision_model
+    set "MAIN_RC=!ERRORLEVEL!"
+    if !MAIN_RC! neq 0 goto :fail
+}
+
+rem call :provision_model
+rem set "MAIN_RC=!ERRORLEVEL!"
+rem if !MAIN_RC! neq 0 goto :fail
 
 call :print_ready_message
 call :cleanup
