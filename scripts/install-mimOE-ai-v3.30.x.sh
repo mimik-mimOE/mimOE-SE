@@ -681,6 +681,14 @@ main() {
 
     run_setup
     wait_for_runtime
+
+    models=$($HOME/.mimoe/bin/mimoe model ls | grep smollm2-360m)
+    if [ -n "$models" ]; then
+        $HOME/.mimoe/bin/mimoe model load smollm2-360m
+    else
+        provision_model
+    fi
+
     provision_model
     print_ready_message
 }
