@@ -50,7 +50,7 @@ set -e
 # --- versions --------------------------------------------------------
 
 # The release id (BOM). The runtime and the addon set are published under it.
-RELEASE="v3.30.26"
+RELEASE="v3.30.42"
 
 # mimoe-setup has its own cadence (separate repo, separate version).
 SETUP_VERSION="v0.7.0"
@@ -61,9 +61,9 @@ SETUP_VERSION="v0.7.0"
 # discovers its version by running `mcp_shell --version`.
 # In a channel install these come from index.json; here they are the
 # bootstrap default.
-EXT_LLAMACPP_VERSION="v1.18.0"
-EXT_ONNX_VERSION="v1.2.1"
-EXT_MCP_SHELL_VERSION="v0.1.1"
+EXT_LLAMACPP_VERSION="v1.36.0"
+EXT_ONNX_VERSION="v1.3.1"
+EXT_MCP_SHELL_VERSION="v0.1.2"
 
 # --- package name grammar --------------------------------------------
 #

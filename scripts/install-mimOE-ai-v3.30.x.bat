@@ -38,7 +38,7 @@ REM CHANNEL_BASE variable is very import url base address for packages, it can
 REM be both remote and local url. Use local http address to do local http install.
 
 REM The release id (BOM). The runtime and the addon set are published under it.
-set "RELEASE=v3.30.26"
+set "RELEASE=v3.30.42"
 
 REM mimoe-setup has its own cadence (separate repo, separate version).
 set "SETUP_VERSION=v0.7.0"
@@ -47,9 +47,9 @@ REM Per-backend versions: each backend's own manifest.json version, NOT the
 REM release id, so an unchanged backend keeps its number across a runtime bump.
 REM mcp_shell ships no manifest.json but is not versionless - mimoe-setup
 REM discovers its version by running `mcp_shell --version`.
-set "EXT_LLAMACPP_VERSION=v1.18.0"
-set "EXT_ONNX_VERSION=v1.2.1"
-set "EXT_MCP_SHELL_VERSION=v0.1.1"
+set "EXT_LLAMACPP_VERSION=v1.36.0"
+set "EXT_ONNX_VERSION=v1.3.1"
+set "EXT_MCP_SHELL_VERSION=v0.1.2"
 
 REM --- platform row ----------------------------------------------------
 
