@@ -125,14 +125,17 @@ extension_set() {
         linux-x64-vulkan)
             echo "llamacpp-vulkan|${EXT_LLAMACPP_VERSION}|backends"
             echo "onnx-cpu|${EXT_ONNX_VERSION}|backends"
+            echo "mcp-shell|${EXT_MCP_SHELL_VERSION}|mcp"
             ;;
         linux-arm64-cuda)
             echo "llamacpp-cuda|${EXT_LLAMACPP_VERSION}|backends"
             echo "onnx-cuda|${EXT_ONNX_VERSION}|backends"
+            echo "mcp-shell|${EXT_MCP_SHELL_VERSION}|mcp"
             ;;
         linux-arm64-cpu)
             echo "llamacpp-cpu|${EXT_LLAMACPP_VERSION}|backends"
             echo "onnx-cpu|${EXT_ONNX_VERSION}|backends"
+            echo "mcp-shell|${EXT_MCP_SHELL_VERSION}|mcp"
             ;;
         *) return 1 ;;
     esac
