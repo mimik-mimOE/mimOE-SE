@@ -41,7 +41,7 @@ REM The release id (BOM). The runtime and the addon set are published under it.
 set "RELEASE=v3.30.85"
 
 REM mimoe-setup has its own cadence (separate repo, separate version).
-set "SETUP_VERSION=v0.7.0"
+set "SETUP_VERSION=v0.9.2"
 
 REM Per-backend versions: each backend's own manifest.json version, NOT the
 REM release id, so an unchanged backend keeps its number across a runtime bump.
