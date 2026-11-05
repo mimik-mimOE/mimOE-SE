@@ -53,7 +53,7 @@ set -e
 RELEASE="v3.30.85"
 
 # mimoe-setup has its own cadence (separate repo, separate version).
-SETUP_VERSION="v0.7.0"
+SETUP_VERSION="v0.9.2"
 
 # Per-backend versions: each backend's own manifest.json version, NOT the
 # release id, so an unchanged backend keeps its number across a runtime bump.
